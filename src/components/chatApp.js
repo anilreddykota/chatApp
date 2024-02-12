@@ -13,7 +13,7 @@ const ChatApp = ({ currentUserId }) => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get('http://localhost:7001/users');
+        const response = await axios.get('https://chatappserver-zop9.onrender.com/users');
         console.log(response.data);
         setUsers(response.data);
       } catch (error) {

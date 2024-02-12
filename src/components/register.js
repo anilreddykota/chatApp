@@ -12,7 +12,7 @@ const Register = () => {
 const nav = useNavigate();
 const handleRegister = async () => {
   try {
-    const response = await axios.post('http://localhost:7001/register', {
+    const response = await axios.post('https://chatappserver-zop9.onrender.com/register', {
       email,
       password,
       nickname,

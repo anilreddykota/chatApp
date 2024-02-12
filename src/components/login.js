@@ -11,7 +11,7 @@ const Login = () => {
   const handleLogin = async () => {
     try {
       // Make an API request to your backend route for user login
-      const response = await axios.post('http://localhost:7001/login', { email, password });
+      const response = await axios.post('https://chatappserver-zop9.onrender.com/login', { email, password });
 
       // Handle the response as needed
       if(response.data.message==="success"){

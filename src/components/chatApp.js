@@ -14,7 +14,6 @@ const ChatApp = ({ currentUserId }) => {
     const fetchUsers = async () => {
       try {
         const response = await axios.get('https://chatappserver-zop9.onrender.com/users');
-        console.log(response.data);
         setUsers(response.data);
       } catch (error) {
         console.error('Error fetching users:', error);
@@ -27,7 +26,6 @@ const ChatApp = ({ currentUserId }) => {
   const handleUserClick = (user) => {
     setSelectedUser(user);
   };
-console.log(currentUserId,selectedUser); 
   return (
     <div className='m-3'>
       <Row>

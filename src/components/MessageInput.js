@@ -12,8 +12,8 @@ const Messaging = ({ userId, reciverId, selecteduser }) => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
-  }, [messages,newMessage]);
-
+  }, [messages]);
+  
 
   useEffect(() => {
 
@@ -22,7 +22,6 @@ const Messaging = ({ userId, reciverId, selecteduser }) => {
     // Join the chat room when the component mounts
     socket.emit('join', {userId,reciverId});
     socket.on('previousMessages', (data) => {
-      console.log('Received previousMessages event:', data);
       setMessages(data.messages);
     
     });
@@ -55,7 +54,6 @@ const Messaging = ({ userId, reciverId, selecteduser }) => {
           text: newMessage,
         });
 
-        console.log('Message sent successfully');
         setNewMessage('');
       } else {
         console.error('Receiver ID is undefined');
@@ -105,7 +103,7 @@ const Messaging = ({ userId, reciverId, selecteduser }) => {
       style={{
         backgroundColor: '#f8f9fa',
         borderRadius: '8px',
-        maxHeight: '90vh',
+        maxHeight: '85vh',
         overflow: 'scroll',
         minHeight: '80vh',
         marginTop: '1.5cm', // Adjusted margin to accommodate top bar

@@ -117,7 +117,7 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar }) =
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
   };
-  const handleSend = async (e) => {
+  const handleKeyDown = async (e) => {
     try {
       if (reciverId) {
         if (e.key === 'Enter' && !e.shiftKey && e.value?.length > 0) {
@@ -130,6 +130,11 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar }) =
         } else {
           // If any other key is pressed, update the newMessage state
           setNewMessage(e.target.value);
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+          // Perform paste action
+          inputRef.current.focus();
+          document.execCommand('paste');
         }
       } else {
         console.error('Receiver ID is undefined');
@@ -149,6 +154,22 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar }) =
         console.error('Error copying to clipboard:', error);
       });
   };
+  const inputRef = useRef(null);
+
+  const handleLongPress = () => {
+    // Perform paste action
+    inputRef.current.focus();
+    document.execCommand('paste');
+  };
+
+  const handleDoubleTap = () => {
+    // Perform paste action
+    inputRef.current.focus();
+    document.execCommand('paste');
+  };
+
+
+
 
   return (
     <>
@@ -230,14 +251,18 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar }) =
 
         <div style={{ height: '1cm' }} className="message">
           <div className="d-flex justify-content-between align-items-center">
-            <input
-              type="text"
-              className="form-control flex-grow-1 mr-2 send-message-input"
-              placeholder="Type your message..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={handleSend}
-            />
+          <input
+      type="text"
+      ref={inputRef}
+      className="form-control flex-grow-1 mr-2 send-message-input"
+      placeholder="Type your message..."
+      value={newMessage}
+      onChange={(e) => setNewMessage(e.target.value)}
+      onKeyDown={handleKeyDown}
+      onContextMenu={(e) => e.preventDefault()} // Prevent default context menu
+      onTouchStart={() => setTimeout(handleLongPress, 500)} // 500ms for long press
+      onDoubleClick={handleDoubleTap}
+    />
             <button className="button-send" type="submit" disabled={newMessage.length < 1} onClick={handleSendMessage}>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send " viewBox="0 0 16 16">
                 <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z" />

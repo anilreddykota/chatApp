@@ -2,7 +2,7 @@ import React from 'react';
 
 const formatText = (text) => {
   const withHyperlinks = text.replace(/(https?:\/\/[^\s]+)/g, (url) => (
-    <a key={url} href={url} target="_blank" rel="noopener noreferrer">
+    <a key={url} href={url} className='color-link' target="_blank" rel="noopener noreferrer">
       {url}
     </a>
   ));

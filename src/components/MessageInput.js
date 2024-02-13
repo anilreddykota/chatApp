@@ -1,50 +1,92 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { socket } from '../socket';
+import formatText from './formats';
 
-const Messaging = ({ userId, reciverId, selecteduser }) => {
+const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState(null);
-  const messagesContainerRef = useRef(null);
+  const [isReceiverOnline, setIsReceiverOnline] = useState(false);
+  const [isRTyping, setIsRTyping] = useState(false);
+
 
   useEffect(() => {
     // Scroll to the bottom when messages change
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollBottom = messagesContainerRef.current.scrollHeight;
+    // (Assuming you want to scroll when new messages arrive)
+    if (messages.length > 0) {
+      const messagesContainer = document.getElementById('messages-container');
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, newMessage]);
+  useEffect(() => {
+    // Listen for changes in the online status of the receiver
+    socket.on('userStatus', ({ userId, isOnline }) => {
+      if (userId === reciverId) {
+        setIsReceiverOnline(isOnline);
+      }
+    });
+    const checkReceiverOnlineStatus = () => {
+      // Emit an event to the server to check the online status of the receiver
+      socket.emit('checkUserStatus', { userId: reciverId });
+    };
 
+    // Cleanup event listener on component unmount
+    checkReceiverOnlineStatus();
+    return () => {
+      socket.off('userStatus');
+    };
+
+  }, [reciverId]);
+
+  // Use this function to check the online status of the receiver
 
   useEffect(() => {
-
     console.log('Socket connected:', socket.connected);
-
     // Join the chat room when the component mounts
+
     socket.emit('join', { userId, reciverId });
     socket.on('previousMessages', (data) => {
       setMessages(data.messages);
-
     });
 
     // Listen for 'newMessage' events from the socket
     socket.on('newMessage', (data) => {
-
       setMessages((prevMessages) => [
         ...prevMessages,
         { senderId: data.senderId, reciverId: data.reciverId, text: data.text, timestamp: new Date() },
       ]);
-
     });
+
 
 
     // Clean up socket listeners when the component unmounts
     return () => {
       console.log('Cleaning up socket listeners');
       socket.off('newMessage');
+      socket.off('userStatus');
+
     };
   }, [userId, reciverId]);
 
-  const handleSendMessage = async () => {
+  useEffect(() => {
+    socket.emit('typing', { senderId: userId, receiverId: reciverId, isTyping: true });
+    socket.on('typing', ({ senderId, receiverId: reciverId, isTyping }) => {
+      if (senderId !== reciverId) {
+        setIsRTyping(isTyping);
+
+        // Clear typing indicator after 2 seconds (adjust as needed)
+        setTimeout(() => {
+          setIsRTyping(false);
+        }, 5000);
+      }
+    });
+    return () => {
+      socket.off('typing');
+    }
+
+  }, [newMessage, reciverId, userId])
+
+  const handleSendMessage = async (e) => {
     try {
       if (reciverId) {
         // Emit a 'sendMessage' event to the server
@@ -53,7 +95,6 @@ const Messaging = ({ userId, reciverId, selecteduser }) => {
           receiverId: reciverId,
           text: newMessage,
         });
-
         setNewMessage('');
       } else {
         console.error('Receiver ID is undefined');
@@ -64,6 +105,7 @@ const Messaging = ({ userId, reciverId, selecteduser }) => {
       setError('Error sending message');
     }
   };
+
   const formatTimestamp = (timestamp) => {
     if (timestamp && timestamp._seconds && timestamp._nanoseconds) {
       // Firestore timestamp format
@@ -75,69 +117,107 @@ const Messaging = ({ userId, reciverId, selecteduser }) => {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
   };
+  const handleSend = async (e) => {
+    try {
+      if (reciverId) {
+        if (e.key === 'Enter' && !e.shiftKey && e.value?.length > 0) {
+          // If Enter is pressed without the Shift key, append a newline character
+          setNewMessage((prevMessage) => prevMessage + '\n');
+        } else if (e.key === 'Enter' && e.shiftKey) {
+          // If Enter is pressed with the Shift key, handle it as sending the message
+          e.preventDefault();
+          handleSendMessage();
+        } else {
+          // If any other key is pressed, update the newMessage state
+          setNewMessage(e.target.value);
+        }
+      } else {
+        console.error('Receiver ID is undefined');
+        setError('Receiver ID is undefined');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setError('Error sending message');
+    }
+  };
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        console.log('Text copied to clipboard:', text);
+      })
+      .catch((error) => {
+        console.error('Error copying to clipboard:', error);
+      });
+  };
+
   return (
-    <> <div className="d-flex flex-column h-100" style={{ maxHeight: '73vh' }}>
-      <div className="bg-light position-fixed w-100 " style={{ zIndex: "999" }}>
-        <div className="d-flex align-items-center">
-          <div
-            style={{
-              height: '1.3cm',
-              width: '1.3cm',
-              backgroundColor: '#00b7ff', // You can customize the background color
-              color: '#cd295a', // Text color
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: '10px',
-              fontSize: '1.5rem',
-            }}
-          >
-            {selecteduser.nickname.charAt(0).toUpperCase()}
+    <>
+      <div style={{ height: '100%' }} className='main-chat'>
+        <div style={{ height: '1.5cm', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="header">
+          <div className="d-flex align-items-center">
+            <div className='d-lg-none d-xl-block'>
+              <button className={`btn  ${isOpen ? 'is-active' : ''}`} onClick={toggleSidebar}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="blue" class="bi bi-box-arrow-in-left" viewBox="0 0 16 16">
+                  <path fill-rule="evenodd" d="M10 3.5a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 1 1 0v2A1.5 1.5 0 0 1 9.5 14h-8A1.5 1.5 0 0 1 0 12.5v-9A1.5 1.5 0 0 1 1.5 2h8A1.5 1.5 0 0 1 11 3.5v2a.5.5 0 0 1-1 0z" />
+                  <path fill-rule="evenodd" d="M4.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H14.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708z" />
+                </svg>
+              </button>
+            </div>
+            <div
+              style={{
+                height: '1.3cm',
+                width: '1.3cm',
+                backgroundColor: '#1d3b55',
+                color: '#cd295a',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: '10px',
+                marginTop: '2px',
+                marginLeft: '5px',
+                fontSize: '1.5rem',
+
+              }}
+            >
+              {selecteduser.nickname.charAt(0).toUpperCase()}
+            </div>
+            <span> {reciverId === userId ? `${selecteduser.nickname}(You)` : selecteduser.nickname}</span>
           </div>
-          <span>Chatting with: {selecteduser.nickname}</span>
+          <div className={`online-status ${isRTyping ? 'text-primary' : isReceiverOnline ? 'text-success bg-light rounded text-bold' : 'text-light'}`}>
+            {isRTyping ? 'Typing...' : (isReceiverOnline ? 'Online' : 'Last Seen: few min ago')}
+          </div>
         </div>
-      </div>
-      <div
-        className="flex-grow-1 overflow-auto p-3"
-        style={{
-          backgroundColor: '#f8f9fa',
-          borderRadius: '8px',
-          maxHeight: '85vh',
-          overflow: 'scroll',
-          minHeight: '80vh',
-          marginTop: '1.5cm', // Adjusted margin to accommodate top bar
-        }}
-        ref={messagesContainerRef}
-      ><div >
 
-
+        <div style={{ height: 'calc(100% - 2.7cm)', width:"fit-content"}} className="conversation" id='messages-container'>
           {error ? (
             <div className="alert alert-danger">Error: {error}</div>
           ) : (
             messages.map((message) => (
-              <div className={message.senderId === userId ? 'text-right' : 'text-left'}>
+
+              <div className={message.senderId === userId ? 'text-right' : 'text-left'} key={message.id}>
                 <div
-                  key={message.id}
-                  className={`p-0 m-2 rounded ${message.senderId === userId
-                    ? 'bg-primary text-white '
+
+                  className={`p-0 m-2 rounded position-relative ${message.senderId === userId
+                    ? 'bg-secondary text-white '
                     : 'bg-light  border border-secondary '
                     }`}
-                  style={{
-                    maxWidth: 'fit-content',
-                    // Add relative positioning to the message container
+
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    copyToClipboard(message.text);
+                    alert("message copied to clipboard")
                   }}
-                  ref={messagesContainerRef}
                 >
-                  <div className="mb-2 p-0 ml-auto p-2 " style={{ minWidth: "2cm" }}>
-                    <b> {message.text}</b>
+                  <div className="mb-2 p-0 ml-auto p-2 " style={{ minWidth: "2cm",width:"fit-content" }}>
+                    <b>  {formatText(message.text)}</b>
                   </div>
                   <div
-                    className={"text-right "}
+                    className={""}
                     style={{
-                      position: 'relative', // Add absolute positioning to the timestamp
-                      bottom: '5px',
-                      left: '50%',
+                      position: 'absolute',
+                      bottom: '1px',
+                      right: '5px',
                     }}
                   >
                     <small style={{ fontSize: "10px" }}>{formatTimestamp(message.timestamp)}</small>
@@ -145,34 +225,27 @@ const Messaging = ({ userId, reciverId, selecteduser }) => {
                 </div>
               </div>
             ))
-          )} </div>
-
-
-      </div>
-    </div>
-
-      <div className="bg-none p-3  w-100 fixed-bottom">
-
-        <div className="d-flex justify-content-between align-items-center">
-          <input
-            type="text"
-            className="form-control flex-grow-1 mr-2"
-            placeholder="Type your message..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-          />
-
-          <button className="button-send" type="submit"
-            disabled={newMessage.length < 1}
-            onClick={handleSendMessage}>
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send " viewBox="0 0 16 16">
-  <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/>
-</svg>          </button>
-
+          )}
         </div>
 
+        <div style={{ height: '1cm' }} className="message">
+          <div className="d-flex justify-content-between align-items-center">
+            <input
+              type="text"
+              className="form-control flex-grow-1 mr-2 send-message-input"
+              placeholder="Type your message..."
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={handleSend}
+            />
+            <button className="button-send" type="submit" disabled={newMessage.length < 1} onClick={handleSendMessage}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send " viewBox="0 0 16 16">
+                <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
-
     </>
   );
 };

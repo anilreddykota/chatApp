@@ -9,6 +9,11 @@ import UserList from './userList';
 const ChatApp = ({ currentUserId }) => {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [isOpen, setIsOpen] = useState(true);
+
+  const toggleSidebar = () => {
+    setIsOpen((prevIsOpen) => !prevIsOpen);
+  };
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -30,11 +35,11 @@ const ChatApp = ({ currentUserId }) => {
     <div className='m-3'>
       <Row>
         <Col md={1}>
-          <UserList users={users} onUserClick={handleUserClick} yourid={currentUserId} />
+          <UserList users={users} onUserClick={handleUserClick} yourid={currentUserId} isopen={isOpen} toggleSidebar={toggleSidebar} />
         </Col>
-        <Col md={11} style={{ maxHeight: '93vh', overflowY: 'auto' }}>
+        <Col md={11} style={{ maxHeight: '94vh', overflowY: 'auto' }}>
           {selectedUser && (
-            <Messaging userId={currentUserId} reciverId={selectedUser.uid} selecteduser={selectedUser} />
+            <Messaging userId={currentUserId} reciverId={selectedUser.uid} selecteduser={selectedUser} toggleSidebar={toggleSidebar}  isOpen={isOpen}  />
           )}
         </Col>
       </Row>

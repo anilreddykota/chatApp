@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ListGroup, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
-const UserList = ({ users, onUserClick, yourid }) => {
+const UserList = ({ users, onUserClick, yourid , isopen ,toggleSidebar}) => {
   const [selectedUser, setSelectedUser] = useState(null);
-  const [isOpen, setIsOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredUsers, setFilteredUsers] = useState(users);
   const nav = useNavigate();
@@ -32,9 +31,7 @@ const UserList = ({ users, onUserClick, yourid }) => {
     setFilteredUsers(filtered);
   }, [searchQuery, users]);
 
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen);
-  };
+ 
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -42,15 +39,16 @@ const UserList = ({ users, onUserClick, yourid }) => {
 
   return (
     <>
-      <button className={`btn btn-primary hamburger ${isOpen ? 'is-active' : ''}`} onClick={toggleSidebar}>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+    <div className='d-none d-lg-block d-xl-none'>
+      <button className={`btn btn-primary hamburger ${isopen ? 'is-active' : ''}`} onClick={toggleSidebar}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-list" viewBox="0 0 16 16">
           <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/>
         </svg>
       </button>
-
-      <div className={`offcanvas offcanvas-start ${isOpen ? 'show' : ''}`} tabIndex="-1">
+      </div>
+      <div className={`offcanvas offcanvas-start ${isopen ? 'show' : ''}`} tabIndex="-1">
         <div className="offcanvas-header">
-          <h3 className="offcanvas-title">User List</h3>
+          <h3 className="offcanvas-title">I CHAT WITH YOU</h3>
           <button type="button" className="btn-close text-reset" onClick={toggleSidebar}></button>
         </div>
 
@@ -86,7 +84,7 @@ const UserList = ({ users, onUserClick, yourid }) => {
         </button>
       </div>
 
-      <div className={`offcanvas-backdrop ${isOpen ? 'show' : ''}`} onClick={toggleSidebar}></div>
+      <div className={`offcanvas-backdrop ${isopen ? 'show' : ''}`} onClick={toggleSidebar}></div>
 
       <style jsx>{`
         .offcanvas {

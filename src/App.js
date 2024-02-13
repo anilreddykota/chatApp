@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import Register from './components/register';
 import Login from './components/login';
 import ChatApp from './components/chatApp';
+import InternetStatusChecker from './OnlineChecker';
 
 function App() {
   const [userId, setUserId] = useState(localStorage.getItem('token') || null);
@@ -12,15 +13,19 @@ function App() {
       <Routes>
         <Route
           path="/register"
-          element={<Register setUserId={setUserId} />} 
+          element={userId ? <Navigate to="/" /> : <Register />}
         />
         <Route
           path="/login"
-          element={<Login setUserId={setUserId} />}
+          element={userId ? <Navigate to="/" /> : <Login userId={setUserId} />}
         />
         <Route
           path="/"
-          element={userId ? <ChatApp currentUserId={userId} /> : <Navigate to="/login" />}
+          element={userId ? (
+            <InternetStatusChecker online={<ChatApp currentUserId={userId} />} />
+          ) : (
+            <Navigate to="/login" />
+          )}
         />
       </Routes>
     </Router>

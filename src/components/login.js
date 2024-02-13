@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import axios from 'axios'; // Import Axios for making HTTP requests
 import { Link, useNavigate } from 'react-router-dom';
 
-const Login = () => {
+const Login = ({userId}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
- const nav = useNavigate();
+  const nav = useNavigate();
+
 
   const handleLogin = async () => {
     try {
@@ -16,6 +17,7 @@ const Login = () => {
       // Handle the response as needed
       if(response.data.message==="success"){
         localStorage.setItem('token',response.data.userRecord);
+        userId(response.data.userRecord)
         nav('/');
         window.location.reload();
         // Assuming your backend returns a success message or user data, you can redirect after successful login

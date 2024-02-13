@@ -8,25 +8,38 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false); // New state for button status
 
-const nav = useNavigate();
-const handleRegister = async () => {
-  try {
-    const response = await axios.post('https://chatappserver-zop9.onrender.com/register', {
-      email,
-      password,
-      nickname,
-      mobileNumber,
-    });
+  const nav = useNavigate();
 
-   alert(response.data.message || response.data.error);
+  const handleRegister = async () => {
+    if (isRegistering) {
+      return; // Prevent multiple clicks while the registration is in progress
+    }
 
-    // Assuming your backend returns a success message or user data, you can redirect after successful registration
-    nav('/login');
-  } catch (error) {
-    console.error('Error registering user:', error.message);
-  }
-};
+    try {
+      setIsRegistering(true); // Disable the button
+
+      const response = await axios.post('https://chatappserver-zop9.onrender.com/register', {
+        email,
+        password,
+        nickname,
+        mobileNumber,
+      });
+
+      alert(response.data.message || response.data.error);
+
+      // Assuming your backend returns a success message or user data, you can redirect after successful registration
+      nav('/login');
+    } catch (error) {
+      console.error('Error registering user:', error.message);
+    } finally {
+      // Enable the button after a delay (e.g., 3 seconds)
+      setTimeout(() => {
+        setIsRegistering(false);
+      }, 3000);
+    }
+  };
 
   return (
     <div className="container mt-5">

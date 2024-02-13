@@ -29,10 +29,10 @@ const ChatApp = ({ currentUserId }) => {
   return (
     <div className='m-3'>
       <Row>
-        <Col md={3}>
+        <Col md={1}>
           <UserList users={users} onUserClick={handleUserClick} yourid={currentUserId} />
         </Col>
-        <Col md={9} style={{ maxHeight: '93vh', overflowY: 'auto' }}>
+        <Col md={11} style={{ maxHeight: '93vh', overflowY: 'auto' }}>
           {selectedUser && (
             <Messaging userId={currentUserId} reciverId={selectedUser.uid} selecteduser={selectedUser} />
           )}

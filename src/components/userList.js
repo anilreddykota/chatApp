@@ -183,4 +183,4 @@ console.log(selectedUserId.uid)
   );
 };
 
-export default UserList;
+export default userList;

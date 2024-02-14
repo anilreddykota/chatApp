@@ -4,7 +4,7 @@ import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
 import { Row, Col } from 'react-bootstrap';
 import Messaging from './MessageInput';
-import UserList from './UserList';
+import userList from './userList';
 
 const ChatApp = ({ currentUserId }) => {
   const [users, setUsers] = useState([]);
@@ -37,7 +37,7 @@ console.log(unreadCounts);
     <div className='m-3'>
       <Row>
         <Col md={1}>
-          <UserList users={users} onUserClick={handleUserClick} yourid={currentUserId} isopen={isOpen} toggleSidebar={toggleSidebar} unreadCounts={unreadCounts} setUnreadCounts={setUnreadCounts}/>
+          <userList users={users} onUserClick={handleUserClick} yourid={currentUserId} isopen={isOpen} toggleSidebar={toggleSidebar} unreadCounts={unreadCounts} setUnreadCounts={setUnreadCounts}/>
         </Col>
         <Col md={11} style={{ maxHeight: '94vh', overflowY: 'auto' }}>
           {selectedUser && (

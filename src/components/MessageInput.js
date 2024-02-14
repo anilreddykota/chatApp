@@ -1,8 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '../socket';
-import formatText from './formats';
+import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm'
+import rehypeRaw from 'rehype-raw';
 
-const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar }) => {
+
+const renderers = {
+  link: ({ href, children }) => (
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  ),
+};
+const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar,setUnreadCounts }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState(null);
@@ -25,10 +35,14 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar }) =
         setIsReceiverOnline(isOnline);
       }
     });
+
     const checkReceiverOnlineStatus = () => {
       // Emit an event to the server to check the online status of the receiver
       socket.emit('checkUserStatus', { userId: reciverId });
     };
+    setTimeout(() => {
+      setIsReceiverOnline(false);
+    }, 30000);
 
     // Cleanup event listener on component unmount
     checkReceiverOnlineStatus();
@@ -55,9 +69,12 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar }) =
         ...prevMessages,
         { senderId: data.senderId, reciverId: data.reciverId, text: data.text, timestamp: new Date() },
       ]);
+      setUnreadCounts((prevUnreadCounts) => ({
+        ...prevUnreadCounts,
+        [data.senderId]: (prevUnreadCounts[data.senderId] || 0) + 1,
+      }));
     });
-
-
+    
 
     // Clean up socket listeners when the component unmounts
     return () => {
@@ -70,10 +87,9 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar }) =
 
   useEffect(() => {
     socket.emit('typing', { senderId: userId, receiverId: reciverId, isTyping: true });
-    socket.on('typing', ({ senderId, receiverId: reciverId, isTyping }) => {
-      if (senderId !== reciverId) {
-        setIsRTyping(isTyping);
-
+    socket.on('typing', (data) => {
+      if (userId !== data.userId) {
+        setIsRTyping(!data.isTyping);
         // Clear typing indicator after 2 seconds (adjust as needed)
         setTimeout(() => {
           setIsRTyping(false);
@@ -84,7 +100,7 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar }) =
       socket.off('typing');
     }
 
-  }, [newMessage, reciverId, userId])
+  }, [newMessage])
 
   const handleSendMessage = async (e) => {
     try {
@@ -110,11 +126,17 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar }) =
     if (timestamp && timestamp._seconds && timestamp._nanoseconds) {
       // Firestore timestamp format
       const date = new Date(timestamp._seconds * 1000 + timestamp._nanoseconds / 1000000);
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return {
+        formattedTime: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        formattedDate: date.toLocaleDateString(),
+      };
     } else {
       // Other timestamp format
       const date = new Date(timestamp);
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return {
+        formattedTime: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        formattedDate: date.toLocaleDateString(),
+      };
     }
   };
   const handleKeyDown = async (e) => {
@@ -178,18 +200,16 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar }) =
           <div className="d-flex align-items-center">
             <div className='d-lg-none d-xl-block'>
               <button className={`btn  ${isOpen ? 'is-active' : ''}`} onClick={toggleSidebar}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="blue" class="bi bi-box-arrow-in-left" viewBox="0 0 16 16">
-                  <path fill-rule="evenodd" d="M10 3.5a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 1 1 0v2A1.5 1.5 0 0 1 9.5 14h-8A1.5 1.5 0 0 1 0 12.5v-9A1.5 1.5 0 0 1 1.5 2h8A1.5 1.5 0 0 1 11 3.5v2a.5.5 0 0 1-1 0z" />
-                  <path fill-rule="evenodd" d="M4.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H14.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708z" />
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"  className="bi bi-box-arrow-in-left color-purple" viewBox="0 0 16 16">
+                  <path fillRule="evenodd" d="M10 3.5a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 1 1 0v2A1.5 1.5 0 0 1 9.5 14h-8A1.5 1.5 0 0 1 0 12.5v-9A1.5 1.5 0 0 1 1.5 2h8A1.5 1.5 0 0 1 11 3.5v2a.5.5 0 0 1-1 0z" />
+                  <path fillRule="evenodd" d="M4.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H14.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708z" />
                 </svg>
               </button>
             </div>
-            <div
+            <div className='bg-color-2 color-purple'
               style={{
                 height: '1.3cm',
                 width: '1.3cm',
-                backgroundColor: '#1d3b55',
-                color: '#cd295a',
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
@@ -205,12 +225,12 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar }) =
             </div>
             <span> {reciverId === userId ? `${selecteduser.nickname}(You)` : selecteduser.nickname}</span>
           </div>
-          <div className={`online-status ${isRTyping ? 'text-primary' : isReceiverOnline ? 'text-success bg-light rounded text-bold' : 'text-light'}`}>
-            {isRTyping ? 'Typing...' : (isReceiverOnline ? 'Online' : 'Last Seen: few min ago')}
+          <div key={userId} className={`online-status ${isRTyping ? 'text-primary bg-light rounded' : isReceiverOnline ? 'text-success bg-light rounded text-bold' : 'text-danger bg-light rounded'}`}>
+            {isRTyping ? 'Typing...' : (isReceiverOnline ? 'Online' : 'offline')}
           </div>
         </div>
 
-        <div style={{ height: 'calc(100% - 2.7cm)', width:"fit-content"}} className="conversation" id='messages-container'>
+        <div style={{ height: 'calc(100% - 3.5cm)' }} className="conversation" id='messages-container'>
           {error ? (
             <div className="alert alert-danger">Error: {error}</div>
           ) : (
@@ -218,51 +238,65 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar }) =
 
               <div className={message.senderId === userId ? 'text-right' : 'text-left'} key={message.id}>
                 <div
-
-                  className={`p-0 m-2 rounded position-relative ${message.senderId === userId
-                    ? 'bg-secondary text-white '
-                    : 'bg-light  border border-secondary '
+                  key={message.id}
+                  className={` d-flex  d-flex-inline  ${message.senderId === userId
+                    ? ' flex-row-reverse '
+                    : 'flex-row'
                     }`}
 
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    copyToClipboard(message.text);
-                    alert("message copied to clipboard")
-                  }}
+                 
                 >
-                  <div className="mb-2 p-0 ml-auto p-2 " style={{ minWidth: "2cm",width:"fit-content" }}>
-                    <b>  {formatText(message.text)}</b>
-                  </div>
                   <div
-                    className={""}
+                    key={message.id}
+                    className="mb-2 ps-1 pe-1 m-1 rounded position-relative"
                     style={{
-                      position: 'absolute',
-                      bottom: '1px',
-                      right: '5px',
+                      minWidth: "3cm",
+                      whiteSpace: "pre-wrap",
+                      maxWidth: "300px",
+                      ...(message.senderId === userId
+                        ? { backgroundColor: "#BED1CF" }
+                        : { backgroundColor: "#E78895" }),
                     }}
-                  >
-                    <small style={{ fontSize: "10px" }}>{formatTimestamp(message.timestamp)}</small>
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      copyToClipboard(message.text);
+                      alert("message copied to clipboard")
+                    }}
+                  > <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} components={renderers}>{message.text}</Markdown>
+
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: '0px',
+                        right: '5px',
+                      }}
+                    >
+                      <small style={{ fontSize: "9px" }} className='text-muted'>
+                        {`${formatTimestamp(message.timestamp).formattedDate} ${formatTimestamp(message.timestamp).formattedTime}`}
+                      </small>
+                    </div>
                   </div>
                 </div>
               </div>
             ))
           )}
         </div>
-
-        <div style={{ height: '1cm' }} className="message">
+        <div style={{ height: '2cm' }} className="message">
           <div className="d-flex justify-content-between align-items-center">
-          <input
-      type="text"
-      ref={inputRef}
-      className="form-control flex-grow-1 mr-2 send-message-input"
-      placeholder="Type your message..."
-      value={newMessage}
-      onChange={(e) => setNewMessage(e.target.value)}
-      onKeyDown={handleKeyDown}
-      onContextMenu={(e) => e.preventDefault()} // Prevent default context menu
-      onTouchStart={() => setTimeout(handleLongPress, 500)} // 500ms for long press
-      onDoubleClick={handleDoubleTap}
-    />
+            <textarea
+              maxLength={1000}
+              style={{ height: '100%', resize: 'none', whiteSpace: "pre-wrap" }}  // Set a fixed height and disable resizing
+              type="text"
+              ref={inputRef}
+              className="form-control flex-grow-1 mr-2 send-message-input user-list"
+              placeholder="Type your message..."
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onContextMenu={(e) => e.preventDefault()} // Prevent default context menu
+              onTouchStart={() => setTimeout(handleLongPress, 500)} // 500ms for long press
+              onDoubleClick={handleDoubleTap}
+            />
             <button className="button-send" type="submit" disabled={newMessage.length < 1} onClick={handleSendMessage}>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send " viewBox="0 0 16 16">
                 <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z" />
@@ -270,6 +304,7 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar }) =
             </button>
           </div>
         </div>
+
       </div>
     </>
   );

@@ -20,8 +20,9 @@
 
 }
 
-.header {
-  background-color: lightslategrey;
+.header,
+.offcanvas-title {
+  background-color: #836FFF;
   color: white;
   font-size: x-large;
   border-radius: 10px;
@@ -29,21 +30,100 @@
 
 .conversation {
   overflow-y: scroll;
+  background-color: #FFF7F1;
 }
+
 .main-chat {
   border: solid 1px #7c8184;
-  border-radius: 10px; /* Adjust the radius as needed */
-  box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.1); /* Adjust shadow properties as needed */
+  border-radius: 10px;
+  /* Adjust the radius as needed */
+  box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.1);
+  /* Adjust shadow properties as needed */
 }
-.send-message-input{
+
+.send-message-input {
   border-radius: 40px;
   box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.1);
-  margin: 0 5px ;
+  margin: 0 5px;
 
 }
-.online-status{
+
+.bg-purple {
+
+  background-color: #836FFF;
+}
+
+.color-purple {
+  color: #836FFF;
+}
+
+.online-status {
   font-size: 15px;
   margin-right: 5px;
+}
+.list-group-item.active{
+  background-color: #836FFF;
+
+}
+
+.bg-color-1 {
+  background-color: #BED1CF
+}
+.bg-color-1:active {
+  background-color: #BED1CF
+}
+
+.bg-color-2 {
+  background-color: #E78895
+}
+
+.color-1 {
+  color: #BED1CF
+}
+
+.color-2 {
+  color: #E78895,
+
+}
+
+.button-logout {
+  background-color: #E78895;
+  border: none;
+  color: white;
+  padding: 8px 15px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+  border-radius: 20px;
+}
+
+
+#stroke1,
+#stroke2,
+#stroke3 {
+  cursor: pointer;
+  background-color:  #E78895;
+  margin-top: 5px;
+  height: 3px;
+  transition: all 600ms ease-in-out;
+}
+
+#stroke1 {
+  width: 12px;
+  transition-delay: .1s;
+}
+
+#stroke2 {
+  width: 20px;
+  transition-delay: .2s;
+}
+
+#stroke3 {
+  width: 28px;
+  transition-delay: .3s;
 }
 
 
@@ -55,11 +135,17 @@
   display: none;
 }
 
-.conversation {
+.userlist::-webkit-scrollbar {
+  display: none;
+}
+
+.conversation,
+.userlist {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-.color-link{
+
+.color-link {
   text-decoration: underline;
   color: #351cd5;
 }

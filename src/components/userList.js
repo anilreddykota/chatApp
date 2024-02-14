@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ListGroup, Form, Col, Row, Button } from 'react-bootstrap';
+import { ListGroup, Form, Col, Row} from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
 const UserList = ({ users, onUserClick, yourid, isopen, toggleSidebar, setUnreadCounts, unreadCounts }) => {
@@ -61,7 +61,6 @@ const UserList = ({ users, onUserClick, yourid, isopen, toggleSidebar, setUnread
     setSelectedUser(selectedUserId);
     onUserClick(selectedUserId);
     toggleSidebar();
-console.log(selectedUserId.uid)
     // Add logic to open the chat with the selected user
     // ...
   };
@@ -183,4 +182,4 @@ console.log(selectedUserId.uid)
   );
 };
 
-export default userList;
+export default UserList;

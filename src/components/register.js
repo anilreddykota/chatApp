@@ -43,6 +43,7 @@ const Register = () => {
 
   return (
     <div className="container mt-5">
+      <div className="text-center h1 bg-purple text-light">I CHAT WITH YOU</div>
       <h2>Register</h2>
       <form>
         <div className="mb-3">
@@ -93,7 +94,7 @@ const Register = () => {
             required
           />
         </div>
-        <button type="button" className="btn btn-primary" onClick={handleRegister}>
+        <button type="button" className="btn btn-primary" onClick={handleRegister} disabled={email?.length <9 || password?.length <4 || nickname?.length <3 || mobileNumber?.length !==10}>
           Register
         </button>
         <div className="mt-3">

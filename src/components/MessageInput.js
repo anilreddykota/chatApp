@@ -12,7 +12,7 @@ const renderers = {
     </a>
   ),
 };
-const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar,setUnreadCounts }) => {
+const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar, setUnreadCounts, isPageVisible }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState(null);
@@ -40,10 +40,6 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar,setU
       // Emit an event to the server to check the online status of the receiver
       socket.emit('checkUserStatus', { userId: reciverId });
     };
-    setTimeout(() => {
-      setIsReceiverOnline(false);
-    }, 30000);
-
     // Cleanup event listener on component unmount
     checkReceiverOnlineStatus();
     return () => {
@@ -56,8 +52,6 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar,setU
 
   useEffect(() => {
     console.log('Socket connected:', socket.connected);
-    // Join the chat room when the component mounts
-
     socket.emit('join', { userId, reciverId });
     socket.on('previousMessages', (data) => {
       setMessages(data.messages);
@@ -65,16 +59,21 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar,setU
 
     // Listen for 'newMessage' events from the socket
     socket.on('newMessage', (data) => {
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { senderId: data.senderId, reciverId: data.reciverId, text: data.text, timestamp: new Date() },
-      ]);
-      setUnreadCounts((prevUnreadCounts) => ({
-        ...prevUnreadCounts,
-        [data.senderId]: (prevUnreadCounts[data.senderId] || 0) + 1,
-      }));
+      // Check if receiverId is not equal to data.senderId before adding the message
+      if (reciverId === data.senderId || userId === data.senderId) {
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { senderId: data.senderId, reciverId: data.reciverId, text: data.text, timestamp: new Date() },
+        ]);
+        // console.log(reciverId, data.senderId);
+        setUnreadCounts((prevUnreadCounts) => ({
+          ...prevUnreadCounts,
+          [data.senderId]: (prevUnreadCounts[data.senderId] || 0) + 1,
+        }));
+      }
     });
-    
+
+
 
     // Clean up socket listeners when the component unmounts
     return () => {
@@ -83,12 +82,13 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar,setU
       socket.off('userStatus');
 
     };
-  }, [userId, reciverId]);
+  }, [userId, reciverId, setUnreadCounts]);
 
   useEffect(() => {
-    socket.emit('typing', { senderId: userId, receiverId: reciverId, isTyping: true });
+    socket.emit('typing', { senderId: userId, receiverId: reciverId, isTyping: isRTyping });
     socket.on('typing', (data) => {
-      if (userId !== data.userId) {
+      // console.log(data, reciverId);
+      if (reciverId === data.userId) {
         setIsRTyping(!data.isTyping);
         // Clear typing indicator after 2 seconds (adjust as needed)
         setTimeout(() => {
@@ -100,7 +100,7 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar,setU
       socket.off('typing');
     }
 
-  }, [newMessage])
+  }, [newMessage, reciverId,isRTyping,userId])
 
   const handleSendMessage = async (e) => {
     try {
@@ -110,6 +110,7 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar,setU
           senderId: userId,
           receiverId: reciverId,
           text: newMessage,
+          username:userId.nickname,
         });
         setNewMessage('');
       } else {
@@ -121,6 +122,9 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar,setU
       setError('Error sending message');
     }
   };
+  useEffect(() => {
+    socket.emit("setoffline", ({ senderId: userId, offline: isPageVisible }))
+  }, [isPageVisible,userId])
 
   const formatTimestamp = (timestamp) => {
     if (timestamp && timestamp._seconds && timestamp._nanoseconds) {
@@ -200,7 +204,7 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar,setU
           <div className="d-flex align-items-center">
             <div className='d-lg-none d-xl-block'>
               <button className={`btn  ${isOpen ? 'is-active' : ''}`} onClick={toggleSidebar}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"  className="bi bi-box-arrow-in-left color-purple" viewBox="0 0 16 16">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" className="bi bi-box-arrow-in-left color-purple" viewBox="0 0 16 16">
                   <path fillRule="evenodd" d="M10 3.5a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 1 1 0v2A1.5 1.5 0 0 1 9.5 14h-8A1.5 1.5 0 0 1 0 12.5v-9A1.5 1.5 0 0 1 1.5 2h8A1.5 1.5 0 0 1 11 3.5v2a.5.5 0 0 1-1 0z" />
                   <path fillRule="evenodd" d="M4.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H14.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708z" />
                 </svg>
@@ -221,7 +225,7 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar,setU
 
               }}
             >
-              {selecteduser.nickname.charAt(0).toUpperCase()}
+              {selecteduser.nickname?.charAt(0)?.toUpperCase()}
             </div>
             <span> {reciverId === userId ? `${selecteduser.nickname}(You)` : selecteduser.nickname}</span>
           </div>
@@ -244,7 +248,7 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar,setU
                     : 'flex-row'
                     }`}
 
-                 
+
                 >
                   <div
                     key={message.id}
@@ -298,13 +302,12 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar,setU
               onDoubleClick={handleDoubleTap}
             />
             <button className="button-send" type="submit" disabled={newMessage.length < 1} onClick={handleSendMessage}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send " viewBox="0 0 16 16">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-send " viewBox="0 0 16 16">
                 <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z" />
               </svg>
             </button>
           </div>
         </div>
-
       </div>
     </>
   );

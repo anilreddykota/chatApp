@@ -1,3 +1,4 @@
+import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import { ListGroup, Form, Col, Row} from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
@@ -10,11 +11,45 @@ const UserList = ({ users, onUserClick, yourid, isopen, toggleSidebar, setUnread
 
   const nav = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    window.location.reload();
-    nav('/login');
+  const handleLogout = async () => {
+    try {
+      // Make a server request to delete the FCM token for the user
+      const userId = localStorage.token; // Replace with your actual function to get the user ID
+  
+      const response = await axios.post(`https://chatappserver-zop9.onrender.com/logout`, {
+        userId,
+      });
+  
+      if (response.status === 200) {
+        console.log('FCM Token deleted successfully on the server');
+  
+        // Use Promise.all to wait for both localStorage.removeItem operations
+        await Promise.all([
+          new Promise((resolve) => {
+            // Remove 'token' from local storage
+            localStorage.removeItem('token');
+            resolve();
+          }),
+          new Promise((resolve) => {
+            // Remove 'fcn_token' from local storage
+            localStorage.removeItem('fcn_token');
+            resolve();
+          }),
+        ]);
+  
+        // Navigate to the login page
+        nav("/login");
+  
+        // Reload the page to apply the changes (optional)
+        window.location.reload();
+      } else {
+        console.error('Failed to delete FCM Token on the server');
+      }
+    } catch (error) {
+      console.error('Error during server request:', error);
+    }
   };
+  
 
   useEffect(() => {
     // Set the first user as the default selected user

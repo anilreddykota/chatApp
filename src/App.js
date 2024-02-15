@@ -7,6 +7,7 @@ import InternetStatusChecker from './OnlineChecker';
 
 function App() {
   const [userId, setUserId] = useState(localStorage.getItem('token') || null);
+  // console.log(userId)
 
   return (
     <Router>

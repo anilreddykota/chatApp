@@ -35,6 +35,8 @@ const Login = ({userId}) => {
 
   return (
     <div className="container mt-5">
+            <div className="text-center h1 bg-color-2 text-light">I CHAT WITH YOU</div>
+
     <h2>Login</h2>
     <form>
       <div className="mb-3">
@@ -59,7 +61,7 @@ const Login = ({userId}) => {
           onChange={(e) => setPassword(e.target.value)}
         />
       </div>
-      <button type="button" className="btn btn-primary" onClick={handleLogin}>
+      <button type="button" className="btn btn-primary" onClick={handleLogin} disabled={email?.length <9 || password?.length <4}>
         Login
       </button>
       <div className="mt-3">

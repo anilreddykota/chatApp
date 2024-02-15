@@ -230,7 +230,7 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar, set
             <span> {reciverId === userId ? `${selecteduser.nickname}(You)` : selecteduser.nickname}</span>
           </div>
           <div key={userId} className={`online-status ${isRTyping ? 'text-primary bg-light rounded' : isReceiverOnline ? 'text-success bg-light rounded text-bold' : 'text-danger bg-light rounded'}`}>
-            {isRTyping ? 'Typing...' : (isReceiverOnline ? 'Online' : 'offline')}
+            {isRTyping && reciverId !==userId ? 'Typing...' : (isReceiverOnline ? 'Online' : 'offline')}
           </div>
         </div>
 
@@ -256,7 +256,7 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar, set
                     style={{
                       minWidth: "3cm",
                       whiteSpace: "pre-wrap",
-                      maxWidth: "300px",
+                      maxWidth: "75%",
                       ...(message.senderId === userId
                         ? { backgroundColor: "#BED1CF" }
                         : { backgroundColor: "#E78895" }),

@@ -32,7 +32,6 @@ const ChatApp = ({ currentUserId }) => {
   const toggleSidebar = () => {
     setIsOpen((prevIsOpen) => !prevIsOpen);
   };
-console.log(unreadCounts);
   useEffect(() => {
     const fetchUsers = async () => {
       try {

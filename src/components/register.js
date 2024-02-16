@@ -2,6 +2,7 @@
 import axios from 'axios';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import LoadingSpinner from './loading';
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -9,10 +10,12 @@ const Register = () => {
   const [nickname, setNickname] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
   const [isRegistering, setIsRegistering] = useState(false); // New state for button status
+  const [loading,setloading] = useState(false);
 
   const nav = useNavigate();
 
   const handleRegister = async () => {
+    setloading(true);
     if (isRegistering) {
       return; // Prevent multiple clicks while the registration is in progress
     }
@@ -35,6 +38,7 @@ const Register = () => {
       console.error('Error registering user:', error.message);
     } finally {
       // Enable the button after a delay (e.g., 3 seconds)
+      setloading(false);
       setTimeout(() => {
         setIsRegistering(false);
       }, 3000);
@@ -45,6 +49,8 @@ const Register = () => {
     <div className="container mt-5">
       <div className="text-center h1 bg-purple text-light">I CHAT WITH YOU</div>
       <h2>Register</h2>
+      {loading && <LoadingSpinner />}
+
       <form>
         <div className="mb-3">
           <label htmlFor="email" className="form-label">Email:</label>

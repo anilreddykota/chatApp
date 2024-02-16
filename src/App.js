@@ -4,6 +4,7 @@ import Register from './components/register';
 import Login from './components/login';
 import ChatApp from './components/chatApp';
 import InternetStatusChecker from './OnlineChecker';
+import FeedbackForm from './components/feedback';
 
 function App() {
   const [userId, setUserId] = useState(localStorage.getItem('token') || null);
@@ -11,6 +12,7 @@ function App() {
 
   return (
     <Router>
+      <FeedbackForm />
       <Routes>
         <Route
           path="/register"
@@ -20,6 +22,7 @@ function App() {
           path="/login"
           element={userId ? <Navigate to="/" /> : <Login userId={setUserId} />}
         />
+        <Route path='/feedback' element={<FeedbackForm />} />
         <Route
           path="/"
           element={userId ? (

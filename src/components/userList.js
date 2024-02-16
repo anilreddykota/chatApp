@@ -2,16 +2,21 @@ import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import { ListGroup, Form, Col, Row} from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import useLocalDatabase from './localdb';
+import LoadingSpinner from './loading';
 
 const UserList = ({ users, onUserClick, yourid, isopen, toggleSidebar, setUnreadCounts, unreadCounts }) => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredUsers, setFilteredUsers] = useState(users);
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
+  const [loading, setloading] = useState(false);
 
   const nav = useNavigate();
 
   const handleLogout = async () => {
+    
+    setloading(true);
     try {
       // Make a server request to delete the FCM token for the user
       const userId = localStorage.token; // Replace with your actual function to get the user ID
@@ -33,20 +38,25 @@ const UserList = ({ users, onUserClick, yourid, isopen, toggleSidebar, setUnread
           new Promise((resolve) => {
             // Remove 'fcn_token' from local storage
             localStorage.removeItem('fcn_token');
+            useLocalDatabase.deleteDatabase();
             resolve();
+
           }),
         ]);
+        
   
         // Navigate to the login page
-        nav("/login");
-  
-        // Reload the page to apply the changes (optional)
-        window.location.reload();
+       
       } else {
         console.error('Failed to delete FCM Token on the server');
       }
     } catch (error) {
       console.error('Error during server request:', error);
+    }
+    finally{
+      setloading(false);
+      nav("/login");
+      window.location.reload();
     }
   };
   
@@ -118,7 +128,7 @@ const UserList = ({ users, onUserClick, yourid, isopen, toggleSidebar, setUnread
           <Row>
             <Col sm={9}>
               <Form.Control
-                type="text"
+                type="search"
                 placeholder="Search by ID or Mobile"
                 value={searchQuery}
                 onChange={handleSearchChange}
@@ -136,10 +146,8 @@ const UserList = ({ users, onUserClick, yourid, isopen, toggleSidebar, setUnread
         </div>
 
         <div className="offcanvas-body userlist" >
-          {/* Search input */}
-
-
-          {/* User list */}
+        {loading && <LoadingSpinner />}
+        {!loading &&
           <ListGroup >
             {filteredUsers.map((user) => (
              <ListGroup.Item
@@ -176,6 +184,7 @@ const UserList = ({ users, onUserClick, yourid, isopen, toggleSidebar, setUnread
             ))}
 
           </ListGroup>
+           }
         </div>
 
         <button className="button-logout" onClick={handleLogout} style={{ marginBottom: '10px' }}>

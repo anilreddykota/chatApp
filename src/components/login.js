@@ -2,14 +2,17 @@
 import React, { useState } from 'react';
 import axios from 'axios'; // Import Axios for making HTTP requests
 import { Link, useNavigate } from 'react-router-dom';
+import LoadingSpinner from './loading';
 
 const Login = ({userId}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const nav = useNavigate();
+  const [loading,setloading] = useState(false)
 
 
   const handleLogin = async () => {
+    setloading(true);
     try {
       // Make an API request to your backend route for user login
       const response = await axios.post('https://chatappserver-zop9.onrender.com/login', { email, password });
@@ -29,15 +32,17 @@ const Login = ({userId}) => {
     } catch (error) {
       console.error('Error logging in:', error.message);
     }finally{
-    
+    setloading(false);
     }
   };
 
   return (
+    
     <div className="container mt-5">
             <div className="text-center h1 bg-color-2 text-light">I CHAT WITH YOU</div>
 
     <h2>Login</h2>
+    {loading && <LoadingSpinner />}
     <form>
       <div className="mb-3">
         <label htmlFor="email" className="form-label">Email:</label>

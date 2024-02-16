@@ -6,6 +6,7 @@ import { Row, Col } from 'react-bootstrap';
 import Messaging from './MessageInput';
 import UserList from './userList';
 import PushNotification from '../PushNotification';
+import useLocalDatabase from './localdb';
 
 const ChatApp = ({ currentUserId }) => {
   const [users, setUsers] = useState([]);
@@ -13,6 +14,8 @@ const ChatApp = ({ currentUserId }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [unreadCounts, setUnreadCounts] = useState({});
   const [isPageVisible, setIsPageVisible] = useState(true);
+  const localDatabase = useLocalDatabase('myDatabase', 'usersObjectStore');
+
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -35,13 +38,19 @@ const ChatApp = ({ currentUserId }) => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
+        const cachedUsers = await localDatabase.fetchDataAndUpdate();
+
+        if (cachedUsers.length > 0) {
+          setUsers(cachedUsers);
+        }
         const response = await axios.get('https://chatappserver-zop9.onrender.com/users');
         setUsers(response.data);
+        localDatabase.storeData(response.data);
       } catch (error) {
         console.error('Error fetching users:', error);
+     
       }
-    };
-
+    }
     fetchUsers();
   }, []);
 

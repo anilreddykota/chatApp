@@ -16,23 +16,35 @@ firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const { title, message,from } = payload.data; // Assuming you send custom data from the server
+  const { message,from } = payload.data; // Assuming you send custom data from the server
 
   // Customize notification options
   const notificationOptions = {
-    body: message || 'new message received',
+    body: `${from} sent ${message}` || `new message from ${from}`,
     icon: 'https://ichatwithyou.vercel.app/logo512.png', // URL to the notification icon
     // image: imageUrl || 'https://example.com/default-image.jpg', // URL to an image displayed in the notification
     badge: 'https://ichatwith.vercel.app/logo512.png', // URL to a badge to be displayed on the notification
     vibrate: [200, 100, 200], // Vibration pattern
     data: { click_action: 'FLUTTER_NOTIFICATION_CLICK' }, // Additional data sent with the notification
     actions: [
-      { action: 'https://ichatwithyou.vercel.app', title: 'Open', icon: 'https://ichatwithyou.vercel.app/logo512.png' },
+      { action: 'see_message', title: 'Open', icon: 'https://ichatwithyou.vercel.app/logo512.png' },
     ],
   };
 
   // Show the notification
-  self.registration.showNotification(title || 'New Message Received In I C W Y', notificationOptions);
+  self.registration.showNotification('New Message Received In I C W Y', notificationOptions);
+});
+
+self.addEventListener('notificationclick', (event) => {
+  const notification = event.notification;
+  const action = event.action;
+
+  if (action === 'see_message') {
+    // Handle the 'Open' action
+    clients.openWindow('https://ichatwithyou.vercel.app');  // Replace with the path to your app
+  }
+
+  notification.close();
 });
 
 

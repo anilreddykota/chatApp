@@ -56,7 +56,7 @@ const UserList = ({ users, onUserClick, yourid, isopen, toggleSidebar, setUnread
     if (users.length > 0) {
       setSelectedUser(users[0]);
     }
-  }, [users]);
+  }, [users,unreadCounts]);
 
   useEffect(() => {
     // Filter users based on search query
@@ -66,7 +66,7 @@ const UserList = ({ users, onUserClick, yourid, isopen, toggleSidebar, setUnread
         user.mobileNumber?.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredUsers(filtered);
-  }, [searchQuery, users]);
+  }, [searchQuery, users,]);
   const handleSort = () => {
     // Toggle sort order between 'asc' and 'desc'
     setSortOrder((prevSortOrder) => (prevSortOrder === 'asc' ? 'desc' : 'asc'));

@@ -12,12 +12,13 @@ const renderers = {
     </a>
   ),
 };
-const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar, setUnreadCounts, isPageVisible }) => {
+const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar, setUnreadCounts, isPageVisible ,unreadCounts }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState(null);
   const [isReceiverOnline, setIsReceiverOnline] = useState(false);
   const [isRTyping, setIsRTyping] = useState(false);
+  const [totalunread, setTotalunread] = useState(0);
 
 
   useEffect(() => {
@@ -66,11 +67,21 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar, set
           { senderId: data.senderId, reciverId: data.reciverId, text: data.text, timestamp: new Date() },
         ]);
         // console.log(reciverId, data.senderId);
+      }else{
+
+       
         setUnreadCounts((prevUnreadCounts) => ({
           ...prevUnreadCounts,
           [data.senderId]: (prevUnreadCounts[data.senderId] || 0) + 1,
         }));
+
       }
+      
+    });
+    setTotalunread(() => {
+      const sum = Object.values(unreadCounts).reduce((acc, count) => acc + count, 0);
+      console.log('Sum of all counts:', sum);
+      return sum;
     });
 
 
@@ -82,25 +93,62 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar, set
       socket.off('userStatus');
 
     };
-  }, [userId, reciverId, setUnreadCounts]);
+  }, [userId, reciverId,unreadCounts,setTotalunread]);
 
-  useEffect(() => {
-    socket.emit('typing', { senderId: userId, receiverId: reciverId, isTyping: isRTyping });
-    socket.on('typing', (data) => {
-      // console.log(data, reciverId);
-      if (reciverId === data.userId) {
-        setIsRTyping(!data.isTyping);
-        // Clear typing indicator after 2 seconds (adjust as needed)
-        setTimeout(() => {
-          setIsRTyping(false);
-        }, 5000);
-      }
-    });
-    return () => {
-      socket.off('typing');
+useEffect(() => {
+  let typingTimer; // Timer to track typing duration
+
+  const handleTyping = () => {
+    socket.emit('typing', { senderId: userId, receiverId: reciverId, isTyping: true });
+  };
+
+  const handleStopTyping = () => {
+    socket.emit('typing', { senderId: userId, receiverId: reciverId, isTyping: false });
+  };
+
+  const handleTypingTimeout = () => {
+    handleStopTyping();
+    setIsRTyping(false);
+  };
+
+  const handleKeyPress = () => {
+    // User is typing, emit 'typing' event
+    handleTyping();
+
+    // Clear existing timer (if any)
+    clearTimeout(typingTimer);
+
+    // Set a new timer to stop typing after 3 seconds
+    typingTimer = setTimeout(handleTypingTimeout, 3000);
+  };
+
+  // Attach event listeners
+  document.addEventListener('keydown', handleKeyPress);
+  document.addEventListener('keyup', handleKeyPress);
+
+  // Cleanup: Remove event listeners
+  return () => {
+    document.removeEventListener('keydown', handleKeyPress);
+    document.removeEventListener('keyup', handleKeyPress);
+    clearTimeout(typingTimer); // Clear timer on component unmount
+    handleStopTyping(); // Ensure 'typing' event is cleared on unmount
+  };
+}, [reciverId, userId]);
+
+useEffect(() => {
+  // Listen for 'typing' events from the server
+  socket.on('typing', (data) => {
+    if (reciverId === data.receiverId) {
+      setIsRTyping(data.isTyping);
     }
+  });
 
-  }, [newMessage, reciverId,isRTyping,userId])
+  // Cleanup: Remove 'typing' event listener on component unmount
+  return () => {
+    socket.off('typing');
+  };
+}, [reciverId]);
+
 
   const handleSendMessage = async (e) => {
     try {
@@ -203,11 +251,35 @@ const Messaging = ({ userId, reciverId, selecteduser, isOpen, toggleSidebar, set
         <div style={{ height: '1.5cm', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="header">
           <div className="d-flex align-items-center">
             <div className='d-lg-none d-xl-block'>
-              <button className={`btn  ${isOpen ? 'is-active' : ''}`} onClick={toggleSidebar}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" className="bi bi-box-arrow-in-left color-purple" viewBox="0 0 16 16">
+              <button className={`btn position-relative ${isOpen ? 'is-active' : ''}`} onClick={toggleSidebar}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" className="bi bi-box-arrow-in-left color-purple z-5" viewBox="0 0 16 16">
                   <path fillRule="evenodd" d="M10 3.5a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 1 1 0v2A1.5 1.5 0 0 1 9.5 14h-8A1.5 1.5 0 0 1 0 12.5v-9A1.5 1.5 0 0 1 1.5 2h8A1.5 1.5 0 0 1 11 3.5v2a.5.5 0 0 1-1 0z" />
                   <path fillRule="evenodd" d="M4.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H14.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708z" />
                 </svg>
+                {totalunread >0 &&
+                 <div className='bg-color-1 color-2 position-absolute'
+                 style={{
+                   height: '0.8cm',
+                   width: '0.8cm',
+                   borderRadius: '50%',
+                   display: 'flex',
+                   alignItems: 'center',
+                   justifyContent: 'center',
+                   marginRight: '10px',
+                   marginTop: '2px',
+                   marginLeft: '5px',
+                   fontSize: '1.5rem',
+                   top:"15px",
+                   left:"20px",
+                   zIndex:"0"
+   
+                 }}
+               >
+                 {totalunread>0 ?totalunread:""}
+               </div>
+
+                }
+               
               </button>
             </div>
             <div className='bg-color-2 color-purple'

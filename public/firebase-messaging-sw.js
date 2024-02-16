@@ -16,7 +16,7 @@ firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const { title, message} = payload.data; // Assuming you send custom data from the server
+  const { title, message,from } = payload.data; // Assuming you send custom data from the server
 
   // Customize notification options
   const notificationOptions = {
@@ -27,7 +27,7 @@ messaging.onBackgroundMessage((payload) => {
     vibrate: [200, 100, 200], // Vibration pattern
     data: { click_action: 'FLUTTER_NOTIFICATION_CLICK' }, // Additional data sent with the notification
     actions: [
-      { action: 'open_url', title: 'Open URL', icon: 'https://ichatwithyou.vercel.app/logo512.png' },
+      { action: 'https://ichatwithyou.vercel.app', title: 'Open', icon: 'https://ichatwithyou.vercel.app/logo512.png' },
     ],
   };
 

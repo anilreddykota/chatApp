@@ -57,7 +57,7 @@ const ChatApp = ({ currentUserId }) => {
         </Col>
         <Col md={10} style={{ maxHeight: '94vh', overflowY: 'auto' }}>
           {selectedUser && (
-            <Messaging userId={currentUserId} reciverId={selectedUser.uid} selecteduser={selectedUser} toggleSidebar={toggleSidebar}  isOpen={isOpen}  setUnreadCounts={setUnreadCounts} isPageVisible={isPageVisible}/>
+            <Messaging userId={currentUserId} reciverId={selectedUser.uid} selecteduser={selectedUser} toggleSidebar={toggleSidebar}  isOpen={isOpen}  unreadCounts={unreadCounts} setUnreadCounts={setUnreadCounts} isPageVisible={isPageVisible}/>
           )}
         </Col>
       </Row>
